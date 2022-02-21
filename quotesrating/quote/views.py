@@ -7,23 +7,22 @@ from django.shortcuts import get_object_or_404
 from .serializers import QuoteSerializer, RateSerializer
 from .models import Quote, Rate
 
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
 class QuoteView(ViewSet):
 
     authentication_classes = [authentication.JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
+    serializer_class = QuoteSerializer
+
+    req_param = openapi.Parameter('Authorization', in_=openapi.IN_HEADER, description="Bearer access-token. use the token from token/ route and prefix it with 'Bearer'", type=openapi.TYPE_STRING)
+
+    @swagger_auto_schema(manual_parameters=[req_param], responses={200: QuoteSerializer(many=True)})
     def list(self, request):
         queryset = Quote.objects.all()
         serializer = QuoteSerializer(queryset, context={'user': request.user},many=True)
-        # for item in serializer.data:
-        #     quote_id = item.get("id")
-        #     user = request.user
-
-        #     rate = Rate.objects.filter(quote__pk=quote_id).filter(user__pk=user.id)
-
-        #     if rate.count() > 0:
-        #         item.update({"your_score": rate[0].score})
-
         return Response(serializer.data)
 
 
@@ -32,6 +31,7 @@ class RateView(ViewSet):
     authentication_classes = [authentication.JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
+    serializer_class = RateSerializer
     def create(self, request, pk):
         quote = get_object_or_404(Quote, pk=pk)
 
