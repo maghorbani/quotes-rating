@@ -36,6 +36,9 @@ def on_delete_user(collector, field, sub_objs, using):
 
 
 class Rate(models.Model):
+    class Meta:
+        unique_together = ('user', 'quote')
+        
     user = models.ForeignKey(User, on_delete=on_delete_user)
     quote = models.ForeignKey(Quote, on_delete=models.CASCADE)
 
