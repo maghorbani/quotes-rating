@@ -5,11 +5,13 @@ from rest_framework.test import APIClient
 from .models import Quote, Rate
 from django.contrib.auth.models import User
 
+import random
 
-class QuoteTest(TestCase):
+
+class BasicTest(TestCase):
     def setUp(self):
-        u1 = User.objects.create_user('john', 'lennon@thebeatles.com', 'johnpassword')
-        u2 = User.objects.create_user('doe', 'doe@thebeatles.com', 'doepassword')
+        u1 = User.objects.create_user('john', 'lennon@test.com', 'johnpassword')
+        u2 = User.objects.create_user('doe', 'doe@test.com', 'doepassword')
         Quote.objects.create(title="A", body="AAA", user=u1)
         Quote.objects.create(title="B", body="BBB", user=u1)
         client = APIClient()
@@ -81,3 +83,41 @@ class QuoteTest(TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.data["average_score"], 4.5)
         self.assertEqual(res.data["your_score"], 4)
+
+
+class LargeNumberOfUsersTest(TestCase):
+    def setUp(self):
+        u1 = User.objects.create_user('john', 'lennon@test.com', 'johnpassword')
+        Quote.objects.create(title="A", body="AAA", user=u1)
+
+        client = APIClient()
+        res = client.post("/api/auth/login/", {
+            "username": "john",
+            "password": "johnpassword"
+        })
+        self.token = res.data['access']
+
+        self.rates = [random.randint(0, 5) for i in range(500)]
+        for i in range(500):
+            u1 = User.objects.create_user('user{}'.format(i), 'user{}@test.com'.format(i), '123456')
+            res = client.post("/api/auth/login/", {
+                "username": "user{}".format(i),
+                "password": "123456"
+            })
+            token = res.data['access']
+
+            client.credentials(HTTP_AUTHORIZATION="JWT " + token)
+            res = client.post(reverse("rate_a_quote", kwargs={'pk': 1}), {"score": self.rates[i]})
+
+        self.avg = 0
+        for s in self.rates:
+            self.avg += s
+        self.avg /= 500
+
+    def test_average(self):
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION="JWT " + self.token)
+        res = client.get(reverse('get_quote', kwargs={"pk": 1}))
+
+        self.assertEqual(res.status_code, 200)
+        self.assertAlmostEqual(res.data['average_score'], self.avg, delta=1e4)
