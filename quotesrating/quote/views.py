@@ -27,6 +27,7 @@ class QuoteView(ViewSet):
         serializer = QuoteSerializer(queryset, context={'user': request.user}, many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(request_body=CreateQuoteSerializer, responses={201: CreateQuoteSerializer})
     def create(self, request):
         serializer = CreateQuoteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
