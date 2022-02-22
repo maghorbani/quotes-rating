@@ -28,9 +28,11 @@ environ.Env.read_env(os.path.join(BASE_DIR.parent, '.env'))
 SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG').lower().strip() == "true"
 
 ALLOWED_HOSTS = []
+if env('ALLOWED_HOSTS').strip() != "":
+    ALLOWED_HOSTS = [item.strip() for item in env('ALLOWED_HOSTS').split(",")]
 
 
 # Application definition
@@ -62,22 +64,21 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication'
     ],
-    # 'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
 }
 
 SWAGGER_SETTINGS = {
-   'SECURITY_DEFINITIONS': {
-      'Bearer': {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
             'type': 'apiKey',
             'name': 'Authorization',
             'in': 'header'
-      }
-   }
+        }
+    }
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(env('ACCESS_TOKEN_LIFETIME'))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(env('REFRESH_TOKEN_LIFETIME'))),
 }
 
 ROOT_URLCONF = 'quotesrating.urls'
