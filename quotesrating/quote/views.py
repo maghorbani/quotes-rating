@@ -41,6 +41,13 @@ class QuoteView(ViewSet):
         serializer.save(user=request.user)
         return Response(serializer.data, status=201)
 
+    @swagger_auto_schema(responses={200: QuoteSerializer})
+    def retrieve(self, request, pk=None):
+        queryset = Quote.objects.all()
+        quote = get_object_or_404(queryset, pk=pk)
+        serializer = QuoteSerializer(quote, context={'user': request.user})
+        return Response(serializer.data)
+
 
 class RateView(ViewSet):
 
@@ -64,11 +71,12 @@ class RateView(ViewSet):
         num_rates = quote.rate_set.count()
 
         rate = Rate(quote=quote, user=request.user, score=score)
-        try:
+        rate_exists = Rate.objects.filter(quote__pk=quote.id).filter(user__pk=request.user.id)
+        if(not rate_exists.count()):
             rate.save()
             quote.average_score = (quote.average_score * num_rates + score) / (num_rates + 1)
             quote.save()
-        except Exception as e:
+        else:
             rate = Rate.objects.filter(quote__pk=quote.id).filter(user__pk=request.user.id)[0]
             old_score = rate.score
             rate.score = score

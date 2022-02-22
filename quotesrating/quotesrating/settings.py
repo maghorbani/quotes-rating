@@ -79,6 +79,7 @@ SWAGGER_SETTINGS = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(env('ACCESS_TOKEN_LIFETIME'))),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=int(env('REFRESH_TOKEN_LIFETIME'))),
+    'AUTH_HEADER_TYPES': ('Bearer', 'JWT', 'Token'),
 }
 
 ROOT_URLCONF = 'quotesrating.urls'
