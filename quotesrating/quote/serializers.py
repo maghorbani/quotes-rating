@@ -1,6 +1,7 @@
 from dataclasses import field, fields
 from rest_framework import serializers
 from .models import Quote, Rate
+from django.core import validators
 
 
 class CreateQuoteSerializer(serializers.ModelSerializer):
@@ -33,3 +34,11 @@ class RateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rate
         fields = '__all__'
+
+
+class CreateRateSerializer(serializers.ModelSerializer):
+    # score = serializers.IntegerField()
+
+    class Meta:
+        model = Rate
+        fields = ('score', )

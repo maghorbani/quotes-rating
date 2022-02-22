@@ -44,7 +44,7 @@ class Rate(models.Model):
     user = models.ForeignKey(User, on_delete=on_delete_user)
     quote = models.ForeignKey(Quote, on_delete=models.CASCADE)
 
-    score = models.IntegerField(default=0, validators=[
+    score = models.IntegerField(validators=[
         MinValueValidator(0),
         MaxValueValidator(5)
     ])

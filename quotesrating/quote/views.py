@@ -1,10 +1,16 @@
+from os import scandir
 from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.response import Response
 from rest_framework import permissions
 from rest_framework_simplejwt import authentication
 from django.shortcuts import get_object_or_404
 
-from .serializers import QuoteSerializer, RateSerializer, CreateQuoteSerializer
+from .serializers import (
+    QuoteSerializer,
+    RateSerializer,
+    CreateQuoteSerializer,
+    CreateRateSerializer
+)
 from .models import Quote, Rate
 
 from drf_yasg.utils import swagger_auto_schema
@@ -27,7 +33,8 @@ class QuoteView(ViewSet):
         serializer = QuoteSerializer(queryset, context={'user': request.user}, many=True)
         return Response(serializer.data)
 
-    @swagger_auto_schema(request_body=CreateQuoteSerializer, responses={201: CreateQuoteSerializer})
+    @swagger_auto_schema(manual_parameters=[req_param],
+                         request_body=CreateQuoteSerializer, responses={201: CreateQuoteSerializer})
     def create(self, request):
         serializer = CreateQuoteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -40,31 +47,19 @@ class RateView(ViewSet):
     authentication_classes = [authentication.JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
-    serializer_class = RateSerializer
+    req_param = openapi.Parameter(
+        'Authorization', openapi.IN_HEADER,
+        description="Bearer access-token. use the token from token/ route and prefix it with 'Bearer'",
+        type=openapi.TYPE_STRING)
 
-    req_param = openapi.Parameter('score', openapi.IN_BODY,
-                                  description="your score to this quote, a number between 0 and 5",
-                                  type=openapi.TYPE_INTEGER)
-
-    @swagger_auto_schema(request_body=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
-        'score': openapi.Schema(type=openapi.TYPE_INTEGER)
-    }), responses={200: RateSerializer()})
+    @swagger_auto_schema(manual_parameters=[req_param],
+                         request_body=CreateRateSerializer, responses={200: RateSerializer()})
     def create(self, request, pk):
         quote = get_object_or_404(Quote, pk=pk)
-
-        if "score" not in request.data:
-            return Response({
-                "message": "'score' key is required"
-            },
-                status=400)
+        serializer = CreateRateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         score = int(request.data.get("score", "0"))
-
-        if score > 5 or score < 0:
-            return Response({
-                "message": "'score' should be an integer between 0 and 5"
-            },
-                status=400)
 
         num_rates = quote.rate_set.count()
 
