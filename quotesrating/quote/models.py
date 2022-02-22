@@ -2,9 +2,11 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 
+
 class Quote(models.Model):
     title = models.CharField(max_length=100)
     body = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     average_score = models.FloatField(default=0)
     """
     This field is calculated using 'moving average' method, 
@@ -38,11 +40,11 @@ def on_delete_user(collector, field, sub_objs, using):
 class Rate(models.Model):
     class Meta:
         unique_together = ('user', 'quote')
-        
+
     user = models.ForeignKey(User, on_delete=on_delete_user)
     quote = models.ForeignKey(Quote, on_delete=models.CASCADE)
 
-    score = models.IntegerField(default=0,validators=[
+    score = models.IntegerField(default=0, validators=[
         MinValueValidator(0),
         MaxValueValidator(5)
     ])
